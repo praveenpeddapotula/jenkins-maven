@@ -1,15 +1,43 @@
 pipeline {
-    agent {
-        label 'maven'
+    agent any  // Use any available agent (node) for this pipeline
+
+    environment {
+        MAVEN_HOME = '/opt/maven'  // Update this path to where Maven is installed on your agents
     }
-    tools {
-        maven 'Maven-On-ServerA'
-    }
+
     stages {
+        stage('Checkout') {
+            steps {
+                // Checkout the code from Git
+                git url: 'https://github.com/praveenpeddapotula/maven-web-app-project.git', branch: 'main'
+            }
+        }
         stage('Build') {
             steps {
-                sh 'mvn clean install'
+                // Build the project using Maven
+                script {
+                    // Define the Maven build command
+                    def mvnCommand = "${env.M2_HOME}/bin/mvn clean package"
+                    
+                    // Run Maven command
+                    sh mvnCommand
+                }
             }
+        }
+        stage('Archive') {
+            steps {
+                // Archive the JAR or WAR file (adjust the pattern as needed)
+                archiveArtifacts artifacts: '**/target/*.jar, **/target/*.war', allowEmptyArchive: true
+            }
+        }
+    }
+
+    post {
+        success {
+            echo 'Build completed successfully!'
+        }
+        failure {
+            echo 'Build failed.'
         }
     }
 }
